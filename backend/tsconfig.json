@@ -11,10 +11,11 @@
     "sourceMap": true,
     "baseUrl": ".",
     "allowJs": true,
+    "composite": true,
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*", "prisma/dummy.ts"],
+  "include": ["src", "./prisma/dummy.ts"],
   "compileOnSave": true
 }

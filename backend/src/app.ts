@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import express, { Application, Request, Response } from "express";
+import express, { Application } from "express";
 import contacts from "../prisma/dummy";
+import { errorHandlerMiddleware, timeoutMiddleware } from "./middlewares";
 import { contactRouter } from "./routes";
 
 const app: Application = express();
@@ -32,9 +33,15 @@ connectPrisma()
     process.exit(1);
   });
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Welcome to Express & TypeScript Server");
+app.get("/", (_, res) => {
+  res.redirect("/contact");
 });
+
+// middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(timeoutMiddleware);
+app.use(errorHandlerMiddleware);
 
 // routes
 app.use("/contact", contactRouter);
