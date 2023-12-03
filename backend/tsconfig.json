@@ -12,6 +12,7 @@
     "baseUrl": ".",
     "allowJs": true,
     "composite": true,
+    "typeRoots": ["./global.d.ts"],
     "paths": {
       "@/*": ["src/*"]
     }

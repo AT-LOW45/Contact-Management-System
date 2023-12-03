@@ -1,4 +1,5 @@
-import { CreateContactRequestSchema } from "@/schema/contact.schema";
+import { MissingFieldsError, ResourceNotFoundError } from "@/errors";
+import { CreateUpdateContactRequestSchema } from "@/schema/contact.schema";
 import { contactService } from "@/services";
 import express, { Request } from "express";
 
@@ -16,10 +17,10 @@ router.get("/", async (_, res, next) => {
 router.post("/", async (req, res, next) => {
   try {
     const contactDetails = req.body;
-    const isValidResponse = CreateContactRequestSchema.safeParse(contactDetails).success;
+    const isValidRequest = CreateUpdateContactRequestSchema.safeParse(contactDetails).success;
 
-    if (!isValidResponse) {
-      return res.status(400).send({ message: "Invalid data. Please double check" });
+    if (!isValidRequest) {
+      throw new MissingFieldsError("Invalid data. Please double check", 400);
     }
 
     const newContactId = (await contactService.saveContact(contactDetails)).id;
@@ -29,13 +30,37 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.patch("/", async (req: Request<{ contactId: number }>, res, next) => {
+router.put("/:contactId", async (req: Request<{ contactId: string }>, res, next) => {
+  try {
+    const contactId = req.params.contactId;
+    const contact = req.body;
+    const isValidRequest = CreateUpdateContactRequestSchema.safeParse(contact).success;
+
+    if (!contactId) {
+      throw new ResourceNotFoundError("Please provide a contact ID", 400);
+    }
+
+    if (!isValidRequest) {
+      throw new MissingFieldsError("Invalid request", 400);
+    }
+
+    await contactService.updateContact(parseInt(contactId), contact);
+    res.status(200).send({ message: `Contact ${contactId} updated successfully` });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete("/:contactId", async (req: Request<{ contactId: string }>, res, next) => {
   try {
     const contactId = req.params.contactId;
 
     if (!contactId) {
-      return res.status(400).send({ message: "Contact not found" });
+      throw new ResourceNotFoundError("Please provide a contact ID", 400);
     }
+
+    await contactService.deleteContactById(parseInt(contactId));
+    res.status(200).send({ message: "Contact deleted successfully" });
   } catch (error) {
     next(error);
   }

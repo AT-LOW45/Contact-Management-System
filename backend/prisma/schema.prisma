@@ -10,21 +10,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  name     String? // optional
-  articles Article[] // a list of articles
-}
-
-model Article {
-  id       Int     @id @default(autoincrement())
-  title    String
-  body     String?
-  author   User    @relation(fields: [authorId], references: [id]) // many to one relationship
-  authorId Int
-}
-
 model Contact {
   id           Int     @id @default(autoincrement())
   name         String

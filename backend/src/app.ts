@@ -41,10 +41,12 @@ app.get("/", (_, res) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(timeoutMiddleware);
-app.use(errorHandlerMiddleware);
 
 // routes
 app.use("/contact", contactRouter);
+
+// error handler for routes
+app.use(errorHandlerMiddleware);
 
 app.listen(port, () => {
   console.log(`Server up and running at http://localhost:${port}`);
