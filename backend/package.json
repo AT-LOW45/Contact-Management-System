@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only ./src/app.ts",
+    "serve": "ts-node-dev -r tsconfig-paths/register --respawn --transpile-only ./src/app.ts",
     "prod": "tsc && node ./dist/app.js",
     "build": "tsc"
   },

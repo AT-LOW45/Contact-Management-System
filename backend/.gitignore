@@ -1,5 +1,7 @@
 node_modules
+
+# IMPORTANT: never commit .env files!
 # Keep environment variables out of version control
-.env
+# .env
 
 ./dist

@@ -3,6 +3,7 @@ import express, { Application } from "express";
 import contacts from "../prisma/dummy";
 import { errorHandlerMiddleware, timeoutMiddleware } from "./middlewares";
 import { contactRouter } from "./routes";
+import cors from "cors";
 
 const app: Application = express();
 const port = process.env.PORT || 8000;
@@ -41,6 +42,7 @@ app.get("/", (_, res) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(timeoutMiddleware);
+app.use(cors({ origin: "http://localhost:5173" }));
 
 // routes
 app.use("/contact", contactRouter);

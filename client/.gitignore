@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# IMPORTANT: never commit .env files!
+# Keep environment variables out of version control
+# .env
