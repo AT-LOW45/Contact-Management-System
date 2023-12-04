@@ -21,49 +21,32 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { getAllContacts, saveContact } from "./services";
 import { Contact } from "./types";
+import useContact from "./useContact";
 
 function App() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [selectedContact, setSelectedContact] = useState<Contact>();
-  const [selectedContactToUpdate, setSelectedContactToUpdate] = useState<Contact>();
-  const [isCreateContactDialogOpen, setIsCreateContactDialogOpen] = useState(false);
-  const [isUpdateContactDialogOpen, setIsUpdateContactDialogOpen] = useState(false);
-  const [isCreateSuccessSnackBarOpen, setIsCreateSuccessSnackBarOpen] = useState(false);
-  const [isConfirmDeleteContactDialogOpen, setIsConfirmDeleteContactDialogOpen] = useState(false);
-
-  const fetchContacts = useCallback(async () => {
-    try {
-      const foundContacts = await getAllContacts();
-      setContacts(foundContacts);
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
-
-  const createContact = async (event: FormEvent) => {
-    try {
-      event.preventDefault();
-      const form = event.currentTarget as unknown as HTMLFormElement;
-
-      const name = (form[0] as HTMLInputElement).value;
-      const email = (form[1] as HTMLInputElement).value;
-      const phoneNumber = (form[2] as HTMLInputElement).value;
-
-      await saveContact({ name, email, phone_number: phoneNumber });
-      setIsCreateContactDialogOpen(false);
-      setIsCreateSuccessSnackBarOpen(true);
-      fetchContacts();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const {
+    changeContact,
+    contacts,
+    createContact,
+    errorSnackbarMessage,
+    isConfirmDeleteContactDialogOpen,
+    isCreateContactDialogOpen,
+    isErrorSnackbarOpen,
+    isSuccessSnackbarOpen,
+    isUpdateContactDialogOpen,
+    removeContact,
+    selectedContactToDelete,
+    selectedContactToUpdate,
+    setIsConfirmDeleteContactDialogOpen,
+    setIsCreateContactDialogOpen,
+    setIsErrorSnackBarOpen,
+    setIsSuccessSnackBarOpen,
+    setIsUpdateContactDialogOpen,
+    setSelectedContactToDelete,
+    setSelectedContactToUpdate,
+    successSnackbarMessage,
+  } = useContact();
 
   const updateField = (event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>, key: keyof Contact) => {
     if (selectedContactToUpdate) {
@@ -76,14 +59,28 @@ function App() {
       return;
     }
 
-    setIsCreateSuccessSnackBarOpen(false);
+    setIsSuccessSnackBarOpen(false);
+  };
+
+  const handleErrorClose = (_: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setIsErrorSnackBarOpen(false);
   };
 
   return (
     <Container maxWidth="xl" component="main">
-      <Snackbar autoHideDuration={5000} open={isCreateSuccessSnackBarOpen} onClose={handleSuccessClose}>
+      <Snackbar autoHideDuration={5000} open={isSuccessSnackbarOpen} onClose={handleSuccessClose}>
         <Alert variant="filled" severity="success" onClose={handleSuccessClose}>
-          Successfully created contact!
+          {successSnackbarMessage}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar autoHideDuration={5000} open={isErrorSnackbarOpen} onClose={handleErrorClose}>
+        <Alert variant="filled" severity="error" onClose={handleErrorClose}>
+          {errorSnackbarMessage}
         </Alert>
       </Snackbar>
 
@@ -148,7 +145,7 @@ function App() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsUpdateContactDialogOpen(false)}>Cancel</Button>
-          <Button>Update</Button>
+          <Button onClick={changeContact}>Update</Button>
         </DialogActions>
       </Dialog>
 
@@ -156,7 +153,6 @@ function App() {
         open={isConfirmDeleteContactDialogOpen}
         onClose={() => {
           setIsConfirmDeleteContactDialogOpen(false);
-          setSelectedContact(undefined);
         }}
       >
         <DialogTitle>Delete Contact</DialogTitle>
@@ -164,7 +160,7 @@ function App() {
           <DialogContentText>
             Are you sure you want to delete contact{" "}
             <Typography component="span" sx={{ fontWeight: "bold", display: "inline-block" }}>
-              {selectedContact?.id}
+              {selectedContactToDelete?.id}
             </Typography>
             ? Deleted contacts cannot be recovered.
           </DialogContentText>
@@ -174,12 +170,11 @@ function App() {
             variant="text"
             onClick={() => {
               setIsConfirmDeleteContactDialogOpen(false);
-              setSelectedContact(undefined);
             }}
           >
             No, go back
           </Button>
-          <Button variant="contained" color="error">
+          <Button variant="contained" color="error" onClick={removeContact}>
             Yes, I'm sure
           </Button>
         </DialogActions>
@@ -188,44 +183,50 @@ function App() {
       <Stack direction="column" gap={5} sx={{ marginY: "3rem" }}>
         <Typography variant="h3">Contact Management System</Typography>
         <List>
-          {contacts.map((contact) => (
-            <ListItem
-              key={contact.id}
-              secondaryAction={
-                <Stack direction="row">
-                  <IconButton
-                    onClick={() => {
-                      setSelectedContactToUpdate(contact);
-                      setIsUpdateContactDialogOpen(true);
-                    }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => {
-                      setSelectedContact(contact);
-                      setIsConfirmDeleteContactDialogOpen(true);
-                    }}
-                  >
-                    <DeleteOutline />
-                  </IconButton>
-                </Stack>
-              }
-            >
-              <ListItemIcon>
-                <AccountCircleIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={contact.name}
-                secondary={
-                  <Stack direction="row" justifyContent="start" gap={3} component="span">
-                    <Typography component="span">{contact.email}</Typography>
-                    <Typography component="span">{contact.phone_number}</Typography>
+          {contacts.length === 0 ? (
+            <Typography sx={{ textAlign: "center", color: "gray" }} variant="h5">
+              No contacts available
+            </Typography>
+          ) : (
+            contacts.map((contact) => (
+              <ListItem
+                key={contact.id}
+                secondaryAction={
+                  <Stack direction="row">
+                    <IconButton
+                      onClick={() => {
+                        setSelectedContactToUpdate(contact);
+                        setIsUpdateContactDialogOpen(true);
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => {
+                        setSelectedContactToDelete(contact);
+                        setIsConfirmDeleteContactDialogOpen(true);
+                      }}
+                    >
+                      <DeleteOutline />
+                    </IconButton>
                   </Stack>
                 }
-              />
-            </ListItem>
-          ))}
+              >
+                <ListItemIcon>
+                  <AccountCircleIcon />
+                </ListItemIcon>
+                <ListItemText
+                  primary={contact.name}
+                  secondary={
+                    <Stack direction="row" justifyContent="start" gap={3} component="span">
+                      <Typography component="span">{contact.email}</Typography>
+                      <Typography component="span">{contact.phone_number}</Typography>
+                    </Stack>
+                  }
+                />
+              </ListItem>
+            ))
+          )}
         </List>
       </Stack>
       <Button

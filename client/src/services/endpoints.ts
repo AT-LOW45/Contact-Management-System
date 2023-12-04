@@ -1,7 +1,5 @@
 const baseUrl = import.meta.env.VITE_ENDPOINT_BASE_URL;
 
-console.log(baseUrl);
-
 const ENDPOINTS = {
   getAllContacts: `${baseUrl}/contact/`,
   saveContact: `${baseUrl}/contact/`,
