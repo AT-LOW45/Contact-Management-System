@@ -48,7 +48,7 @@ On a separate terminal window, run:
 
 ```
 // start client server
-$ cd frontend
+$ cd client
 $ npm install
 $ npm run dev
 ```
